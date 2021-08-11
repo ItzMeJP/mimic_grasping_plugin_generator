@@ -1,0 +1,12 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=@CMAKE_INSTALL_PREFIX@
+libdir=${exec_prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+
+Name: @6DMIMIC_INTERFACE_PLUGIN@
+Description: @A plugin to communicate with 6dmimic pipeline@
+Version: @11_08_2021@
+
+Requires:
+Libs: -L${libdir} -l6dmimic_interface
+Cflags: -I${includedir}
