@@ -41,7 +41,7 @@ make install
 
 After the installation, the generated plugins will be placed at [plugins folder](./plugins). The supported plugins are:
 
-1. **libTODO**: Object recognition plugin fed by static cloud, i.e., static point cloud publication from memory. Useful for debug. Associated tester node: "raw_test".
+1. **lib6d_mimic_interface**: 6DMimic localization plugin. The plugin request pose from [Mimic Grasping 6DMimic Interface](TODO). Associated tester node: "6dmimic_interface_node".
 
 To run a plugin, the loader package need to be in accordance with [Mimic Grasping API](https://gitlab.inesctec.pt/CRIIS/mimicgrasping/mimic_grasping_api) which plugin system is based on [Plugin System Management](https://gitlab.inesctec.pt/CRIIS/mimicgrasping/plugin_system_management) API.
 
@@ -53,13 +53,16 @@ Each plugin can be tested by running each plugin node tester. Bellow is presente
 
 ##### **Raw tester**
 
-Tester used to debug **libXXXTODO**.
+Tester used to debug **lib6d_mimic_interface**.
 To run, just:
 
 ```
-TODO
+cd build
+./6dmimic_interface_node
 ```
 
+**NOTE:**
+Instead of using the [Mimic Grasping 6DMimic Interface](TODO), which need to have the hardware to perform the detection, a simple UDP client was implemented in lazarus/pascal [here](TODO). It is usefull for debug.
 
 
 

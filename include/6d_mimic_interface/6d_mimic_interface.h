@@ -66,10 +66,13 @@ protected:
 private:
 
     int wait_for_sixdmimic_server_timeout_in_seconds_,
-    wait_for_sixdmimic_result_timeout_in_seconds_;
+        candidate_index_,
+        wait_for_sixdmimic_result_timeout_in_seconds_;
 
-    std::string udp_ip_addr_ = "";
-    int udp_ip_port_ = -1;
+    struct IPV4{
+        std::string ip_addr = "";
+        int ip_port = -1;
+    } listen_udp_, pub_udp_;
 
     std::shared_ptr<simple_network::udp_interface::UDPClient> udp_client_;
     std::shared_ptr<simple_network::udp_interface::UDPServer> udp_server_;

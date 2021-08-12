@@ -32,6 +32,7 @@ bool SixDMimicLocalization::setTargetName(std::string _name_with_path) {
     target_name_ = _name_with_path;
     return true;
 }
+
 bool SixDMimicLocalization::loadAppConfiguration() {
 
     std::ifstream config_file(plugin_config_path_, std::ifstream::binary);
@@ -47,10 +48,11 @@ bool SixDMimicLocalization::loadAppConfiguration() {
         return false;
     }
 
-    wait_for_sixdmimic_server_timeout_in_seconds_ = config_data_["6dmimic_server"]["wait_for_server_timeout_in_seconds"].asInt();
-    wait_for_sixdmimic_result_timeout_in_seconds_ = config_data_["6dmimic_server"]["wait_for_result_timeout_in_seconds"].asInt();
-    udp_ip_addr_ = config_data_["6dmimic_server"]["udp_ipv4_address"].asString();
-    udp_ip_port_ = config_data_["6dmimic_server"]["udp_ipv4_port"].asInt();
+    wait_for_sixdmimic_result_timeout_in_seconds_ = config_data_["wait_for_result_timeout_in_seconds"].asInt();
+    listen_udp_.ip_addr = config_data_["listen_ip_address"].asString();
+    listen_udp_.ip_port = config_data_["listen_ip_port"].asInt();
+    pub_udp_.ip_addr = config_data_["publisher_ip_address"].asString();
+    pub_udp_.ip_port = config_data_["publisher_ip_port"].asInt();
 
     if (plugin_exec_path_.empty()) {
         output_string_ = plugin_name + " exec is not defined.";
@@ -72,24 +74,51 @@ bool SixDMimicLocalization::runApp() {
     status_ = FEEDBACK::RUNNING;
     stopApp();
 
+    candidate_index_ = 0;
+
     pipe_to_sixdmimic_localization_.reset(
             popen(plugin_exec_path_.c_str(), "r")); // TODO: find a solution to treat this error!
 
-            int descriptor = fileno(pipe_to_sixdmimic_localization_.get());
-            fcntl(descriptor, F_SETFL, O_NONBLOCK);
+    int descriptor = fileno(pipe_to_sixdmimic_localization_.get());
+    fcntl(descriptor, F_SETFL, O_NONBLOCK);
 
-            sixdmimic_localization_thread_reader_.reset(
-                    new boost::thread(boost::bind(&SixDMimicLocalization::execCallback, this, descriptor)));
+    sixdmimic_localization_thread_reader_.reset(
+            new boost::thread(boost::bind(&SixDMimicLocalization::execCallback, this, descriptor)));
 
-            first_sixdmimic_localization_communication_ = false;
+    first_sixdmimic_localization_communication_ = false;
 
-            if (!err_flag_pipe_corrupted_) {
-                status_ = FEEDBACK::INITIALIZING;
-                }
-            else
-                stopApp();
+    if (listen_udp_.ip_addr.empty() || pub_udp_.ip_addr.empty()) {
+        output_string_ = "Invalid UDP IP Address";
+        status_ = FEEDBACK::ERROR;
+        return false;
+    }
 
-            return true;
+    if (listen_udp_.ip_port < 0 || pub_udp_.ip_port < 0) {
+        output_string_ = "Invalid UDP IP Port";
+        status_ = FEEDBACK::ERROR;
+        return false;
+    }
+
+    try {
+        udp_client_ = std::make_shared<simple_network::udp_interface::UDPClient>(simple_network::IPv4, pub_udp_.ip_addr,
+                                                                                 pub_udp_.ip_port);
+        udp_server_ = std::make_shared<simple_network::udp_interface::UDPServer>(simple_network::IPv4,
+                                                                                 listen_udp_.ip_addr,
+                                                                                 listen_udp_.ip_port);
+    }
+    catch (std::exception &e) {
+        output_string_ = e.what();
+        return false;
+    }
+
+
+    if (!err_flag_pipe_corrupted_) {
+        status_ = FEEDBACK::INITIALIZING;
+    } else
+        stopApp();
+
+
+    return true;
 }
 
 
@@ -120,23 +149,8 @@ bool SixDMimicLocalization::requestData(Pose &_result) {
         return false;
     }
 
-    if(udp_ip_addr_.empty()){
-        output_string_ = "Invalid UDP IP Address";
-        status_ = FEEDBACK::ERROR;
-        return false;
-    }
-
-    if(udp_ip_port_ < 0){
-        output_string_ = "Invalid UDP IP Port";
-        status_ = FEEDBACK::ERROR;
-        return false;
-    }
-
-    udp_client_ = std::make_shared<simple_network::udp_interface::UDPClient>(simple_network::IPv4,udp_ip_addr_,udp_ip_port_);
-    udp_server_ = std::make_shared<simple_network::udp_interface::UDPServer>(simple_network::IPv4,udp_ip_addr_,udp_ip_port_);
-
-    if(!udp_client_->send("Request data")) {
-        output_string_ =  "Fail to request data. | " + udp_client_->getOutputMSG();
+    if (!udp_client_->send("Request data")) {
+        output_string_ = "Fail to request data. | " + udp_client_->getOutputMSG();
         status_ = FEEDBACK::ERROR;
         return false;
     }
@@ -147,52 +161,57 @@ bool SixDMimicLocalization::requestData(Pose &_result) {
 
     for (;;) {
         udp_server_->spinPoll();
-        if( !(udp_server_->getLastReceivedDataTimestamp() == prev_timestamp)) {
-            std::cout << "Received from " << udp_server_->getLastClientAddress() << " at ["
+        if (!(udp_server_->getLastReceivedDataTimestamp() == prev_timestamp)) {
+            /*std::cout << "Received from " << udp_server_->getLastClientAddress() << " at ["
             << udp_server_->getLastReceivedDataTimestamp() << "] " << "The following message: \n"
             << udp_server_->getLastReceivedData() << std::endl;
-            data = udp_server_->getLastReceivedData() ;
+            */
+            data = udp_server_->getLastReceivedData();
             prev_timestamp = udp_server_->getLastReceivedDataTimestamp();
-
             break;
         }
 
-        current_time = float( clock () - begin_time ) /  CLOCKS_PER_SEC;
-        std::cout << "waiting: " << std::to_string(current_time) << std::endl;
+        current_time = float(clock() - begin_time) / CLOCKS_PER_SEC;
+        //std::cout << "waiting: " << std::to_string(current_time) << std::endl;
 
-        if(current_time < wait_for_sixdmimic_result_timeout_in_seconds_){
-            output_string_ =  "Fail to request data. | Request timeout. ";
+        if (current_time > wait_for_sixdmimic_result_timeout_in_seconds_) {
+            output_string_ = "Fail to request data. | Request timeout. ";
             status_ = FEEDBACK::ERROR;
             return false;
         }
     }
 
     std::vector<std::string> data_arr;
-    if(!convertDataStrToPose(data, data_arr))
-    {
-        output_string_ =  "Data protocol is not correct.";
+    if (!convertDataStrToPose(data, data_arr)) {
+        std::stringstream ss;
+        for (size_t i = 0; i < data_arr.size(); ++i) {
+            ss << data_arr.at(i) << " ";
+        }
+
+        output_string_ = "Data protocol is not correct. Decoded message: \"" + ss.str() + "\"";
         status_ = FEEDBACK::ERROR;
         return false;
     }
 
-    Eigen::Translation3d t(std::stod(data_arr.at(2)),
-                           std::stod(data_arr.at(3)),
-                           std::stod(data_arr.at(4)));
+    Eigen::Translation3d t(std::stod(data_arr.at(3)),
+                           std::stod(data_arr.at(4)),
+                           std::stod(data_arr.at(5)));
 
-    Eigen::Vector3d q(std::stod(data_arr.at(5)),
-                      std::stod(data_arr.at(6)),
-                      std::stod(data_arr.at(7)));
+    Eigen::Vector3d q(std::stod(data_arr.at(6)),
+                      std::stod(data_arr.at(7)),
+                      std::stod(data_arr.at(8)));
 
-    _result.setName(getNameFromPath(target_name_)+"_frame_id");
-    _result.setParentName(data_arr.at(1));
+    _result.setName("candidate_" + std::to_string(candidate_index_));
+    _result.setParentName(data_arr.at(2));
     _result.setPosition(t);
     _result.setRPYOrientationZYXOrder(q);
 
+    candidate_index_++;
     return true;
 
 }
 
-std::string SixDMimicLocalization::getNameFromPath(std::string _s){
+std::string SixDMimicLocalization::getNameFromPath(std::string _s) {
     size_t pos = 0;
     std::string token, delimiter = "/";
 
@@ -201,8 +220,8 @@ std::string SixDMimicLocalization::getNameFromPath(std::string _s){
         _s.erase(0, pos + delimiter.length());
     }
 
-    delimiter=".";
-    _s =  _s.substr(0, _s.find(delimiter));
+    delimiter = ".";
+    _s = _s.substr(0, _s.find(delimiter));
     return _s;
 }
 
@@ -256,7 +275,7 @@ void SixDMimicLocalization::spin(int _usec) {
 
 }
 
-bool SixDMimicLocalization::convertDataStrToPose(std::string _in, std::vector<std::string> &_data_arr){
+bool SixDMimicLocalization::convertDataStrToPose(std::string _in, std::vector<std::string> &_data_arr) {
 
     size_t pos = 0;
     std::string token, delimiter = "|";
@@ -266,8 +285,15 @@ bool SixDMimicLocalization::convertDataStrToPose(std::string _in, std::vector<st
         _data_arr.push_back(token);
         _in.erase(0, pos + delimiter.length());
     }
+    _data_arr.push_back(_in);
 
-    if(_data_arr.size()<8)
+    if (_data_arr.size() != 10)
+        return false;
+
+    if (_data_arr.at(0).compare("<b>"))
+        return false;
+
+    if (_data_arr.at(9).compare("<e>"))
         return false;
 
     return true;
