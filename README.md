@@ -34,7 +34,7 @@ cd mimic_grasping_plugin_generator
 mkkir build
 cd build
 cmake ..
-make install
+make
 ```
 
 ### <a name="Usage"></a>4. Usage
@@ -62,7 +62,7 @@ cd build
 ```
 
 **NOTE:**
-Instead of using the [Mimic Grasping 6DMimic Interface](TODO), which need to have the hardware to perform the detection, a simple UDP client was implemented in lazarus/pascal [here](TODO). It is usefull for debug.
+Instead of using the [Mimic Grasping 6DMimic Interface](TODO), which need to have the hardware to perform the detection, a simple UDP client was implemented in lazarus/pascal [here](https://github.com/ItzMeJP/lazarus_simple_udp_server.git). It is usefull for debug.
 
 
 

@@ -6,13 +6,14 @@ project(mimic_grasping_plugin_generator
 
 set(CMAKE_C_COMPILER "gcc-10")
 set(CMAKE_CXX_COMPILER "/usr/bin/g++-10")
-set(CMAKE_CXX_STANDARD 17)
 
 include(GNUInstallDirs)
 
 get_filename_component(CURRENT_DIR ./ ABSOLUTE)
 
 set(PLUGINS_DIR_FOLDER ${CURRENT_DIR}/plugins)
+set(CMAKE_CXX_STANDARD 17)
+
 set(SUBDIR_LIBS_PATH libs)
 
 #External packages
@@ -30,18 +31,17 @@ add_library(transform_manipulation SHARED IMPORTED GLOBAL)
 set_property(TARGET transform_manipulation PROPERTY IMPORTED_LOCATION "/usr/local/lib/transform_manipulation/libtransform_manipulation.so")
 
 include_directories(
-        include/6d_mimic_interface
+        include/6d_mimic_client
 )
 
 ## ----------------------------------------------------------------------------------------------------------------------------------
-## -----------------------------------------------------------  6DMimic interface LIB- ----------------------------------------------
+## -----------------------------------------------------------  6DMimic interface LIB -----------------------------------------------
 ## ----------------------------------------------------------------------------------------------------------------------------------
 
-add_library(6d_mimic_interface SHARED #Shared is to export it latter
-        src/6d_mimic_interface/6d_mimic_interface.cpp
-        include/6d_mimic_interface/6d_mimic_interface.h)
+add_library(interface_6dmimic SHARED #Shared is to export it latter
+        src/6d_mimic_client/interface_6dmimic.cpp)
 
-target_link_libraries(6d_mimic_interface
+target_link_libraries(interface_6dmimic
         simple_network
         plugin_system_management
         transform_manipulation
@@ -54,20 +54,20 @@ target_link_libraries(6d_mimic_interface
         jsoncpp
         )
 
-target_include_directories(6d_mimic_interface PRIVATE .)
+target_include_directories(interface_6dmimic PRIVATE .)
 
-set_target_properties(6d_mimic_interface PROPERTIES
+set_target_properties(interface_6dmimic PROPERTIES
         #VERSION ${PROJECT_VERSION}
-        PUBLIC_HEADER "include/6d_mimic_interface/6d_mimic_interface.h"
+        PUBLIC_HEADER "include/6d_mimic_client/interface_6dmimic.h"
         )
 
-configure_file(install_configurations/6dmimic_interface.pc.in 6d_mimic_interface.pc @ONLY)
+configure_file(install_configurations/interface_6dmimic.pc.in interface_6dmimic.pc @ONLY)
 
-install(TARGETS 6d_mimic_interface
+install(TARGETS interface_6dmimic
         LIBRARY DESTINATION ${PLUGINS_DIR_FOLDER}
         PUBLIC_HEADER DESTINATION ${CMAKE_BINARY_DIR}/public_headers)
 
-install(FILES ${CMAKE_BINARY_DIR}/6d_mimic_interface.pc
+install(FILES ${CMAKE_BINARY_DIR}/interface_6dmimic.pc
         DESTINATION ${CMAKE_BINARY_DIR}/pkgconfig)
 
 
@@ -75,11 +75,11 @@ install(FILES ${CMAKE_BINARY_DIR}/6d_mimic_interface.pc
 ## --------------------------------------------------------  Executables ------------------------------------------------------------
 ## ----------------------------------------------------------------------------------------------------------------------------------
 ## Define an executable
-add_executable(6dmimic_interface_node
-        src/examples/6dmimic_interface_node.cpp)
+add_executable(interface_6dmimic_node
+        src/examples/interface_6dmimic_node.cpp)
 
 ## Define the executable dependencies
-target_link_libraries(6dmimic_interface_node
-        6d_mimic_interface
+target_link_libraries(interface_6dmimic_node
+        interface_6dmimic
         )
 

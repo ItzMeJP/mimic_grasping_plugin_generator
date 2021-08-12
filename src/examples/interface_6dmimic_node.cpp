@@ -1,4 +1,4 @@
-#include "6d_mimic_interface.h"
+#include "interface_6dmimic.h"
 
 int main(int argc, char **argv) {
 

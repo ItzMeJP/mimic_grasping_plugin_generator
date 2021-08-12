@@ -2,7 +2,7 @@
 // Created by joaopedro on 11/08/21.
 //
 
-#include "6d_mimic_interface.h"
+#include "interface_6dmimic.h"
 
 
 SixDMimicLocalization::SixDMimicLocalization() {
@@ -149,7 +149,7 @@ bool SixDMimicLocalization::requestData(Pose &_result) {
         return false;
     }
 
-    if (!udp_client_->send("Request data")) {
+    if (!udp_client_->send("STARTLEARNING")) {
         output_string_ = "Fail to request data. | " + udp_client_->getOutputMSG();
         status_ = FEEDBACK::ERROR;
         return false;

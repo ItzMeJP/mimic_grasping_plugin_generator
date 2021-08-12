@@ -2,8 +2,8 @@
 // Created by joaopedro on 11/08/21.
 //
 
-#ifndef MIMIC_GRASPING_PLUGIN_GENERATOR_6D_MIMIC_INTERFACE_H
-#define MIMIC_GRASPING_PLUGIN_GENERATOR_6D_MIMIC_INTERFACE_H
+#ifndef MIMIC_GRASPING_PLUGIN_GENERATOR_INTERFACE_6DMIMIC_NODE_H
+#define MIMIC_GRASPING_PLUGIN_GENERATOR_INTERFACE_6DMIMIC_NODE_H
 
 #include <fcntl.h>
 #include <unistd.h> //read function
@@ -59,8 +59,6 @@ protected:
 
     void exec(int _descriptor);
 
-    bool initRosNode();
-
     std::string getNameFromPath(std::string _s);
 
 private:
@@ -84,7 +82,7 @@ private:
 /** This part should be added in all plugins, therefore the plugin management can identified it. **/
 
 /** Define the Plugin name **/
-std::string plugin_name = "6DMimicPlugin";
+std::string plugin_name = "Interface6DMimicPlugin";
 
 PLUGIN_EXPORT_C
 auto GetPluginFactory() -> IPluginFactory * {
@@ -109,4 +107,4 @@ struct _DLLInit {
     }
 } dll_init;
 
-#endif //MIMIC_GRASPING_PLUGIN_GENERATOR_6D_MIMIC_INTERFACE_H
+#endif //MIMIC_GRASPING_PLUGIN_GENERATOR_INTERFACE_6DMIMIC_NODE_H

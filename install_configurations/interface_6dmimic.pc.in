@@ -8,5 +8,5 @@ Description: @A plugin to communicate with 6dmimic pipeline@
 Version: @11_08_2021@
 
 Requires:
-Libs: -L${libdir} -l6dmimic_interface
+Libs: -L${libdir} -l6dmimic_localization
 Cflags: -I${includedir}
