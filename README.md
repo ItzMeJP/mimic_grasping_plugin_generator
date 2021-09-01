@@ -29,9 +29,9 @@ Setup all prerequisites.
 
 Clone and compile the repository:
 ```
-git clone TODO
+git clone ttps://github.com/ItzMeJP/mimic_grasping_plugin_generator.git
 cd mimic_grasping_plugin_generator
-mkkir build
+mkdir build
 cd build
 cmake ..
 make

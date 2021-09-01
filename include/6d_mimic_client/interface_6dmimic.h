@@ -14,6 +14,7 @@
 
 #include <simple_network/udp_interface.h>
 
+
 #include <mimic_grasping_api/localization_base.h>
 
 class SixDMimicLocalization : public LocalizationBase {
@@ -89,7 +90,7 @@ auto GetPluginFactory() -> IPluginFactory * {
 
     static PluginFactory pinfo = [] {
         /** Properly set the plugin name and version **/
-        auto p = PluginFactory(plugin_name.c_str(), "11_08_2021");
+        auto p = PluginFactory(plugin_name.c_str(), "01_09_2021");
         /** Register all classes defined inside the plugin **/
         p.registerClass<SixDMimicLocalization>("SixDMimicLocalization");
         return p;

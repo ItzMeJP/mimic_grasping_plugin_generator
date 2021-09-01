@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(mimic_grasping_plugin_generator
-        VERSION 11.08.2021
+        VERSION 01.09.2021
         DESCRIPTION
         "Package to build pure c++ plugins to mimic_grasping_api")
 
@@ -38,7 +38,7 @@ include_directories(
 ## -----------------------------------------------------------  6DMimic interface LIB -----------------------------------------------
 ## ----------------------------------------------------------------------------------------------------------------------------------
 
-add_library(interface_6dmimic SHARED #Shared is to export it latter
+add_library(interface_6dmimic SHARED#Shared is to export it latter
         src/6d_mimic_client/interface_6dmimic.cpp)
 
 target_link_libraries(interface_6dmimic
@@ -59,6 +59,7 @@ target_include_directories(interface_6dmimic PRIVATE .)
 set_target_properties(interface_6dmimic PROPERTIES
         #VERSION ${PROJECT_VERSION}
         PUBLIC_HEADER "include/6d_mimic_client/interface_6dmimic.h"
+        LIBRARY_OUTPUT_DIRECTORY ${PLUGINS_DIR_FOLDER}
         )
 
 configure_file(install_configurations/interface_6dmimic.pc.in interface_6dmimic.pc @ONLY)
@@ -80,6 +81,11 @@ add_executable(interface_6dmimic_node
 
 ## Define the executable dependencies
 target_link_libraries(interface_6dmimic_node
-        interface_6dmimic
+        plugin_system_management
+        transform_manipulation
+        Eigen3::Eigen
+        Boost::thread
+        Boost::timer
+        jsoncpp
         )
 

@@ -5,13 +5,9 @@
 #include "interface_6dmimic.h"
 
 
-SixDMimicLocalization::SixDMimicLocalization() {
+SixDMimicLocalization::SixDMimicLocalization() {};
 
-}
-
-SixDMimicLocalization::~SixDMimicLocalization() {
-    stopApp();
-}
+SixDMimicLocalization::~SixDMimicLocalization() {};
 
 bool SixDMimicLocalization::setAppConfigPath(std::string _file_with_path) {
     plugin_config_path_ = _file_with_path;
@@ -123,21 +119,23 @@ bool SixDMimicLocalization::runApp() {
 
 
 bool SixDMimicLocalization::stopApp() {
-
     if (!first_sixdmimic_localization_communication_) {
-
+        udp_client_->closeSocket();
+        udp_server_->closeSocket();
         sixdmimic_localization_thread_reader_->interrupt();
         sixdmimic_localization_thread_reader_->join();
         //pclose(pipe_to_obj_localization_.get());
+        std::cout << "Killing 6Dmimic server" << std::endl;
         popen(plugin_terminator_path_.c_str(), "r");
+        sleep(1);
         first_sixdmimic_localization_communication_ = true;
         return true;
     } else {
         output_string_ = "Cannot kill since the 6DMimic recognition process is not running.";
         return false;
     }
-}
 
+}
 
 bool SixDMimicLocalization::requestData(Pose &_result) {
 
@@ -151,6 +149,7 @@ bool SixDMimicLocalization::requestData(Pose &_result) {
 
     if (!udp_client_->send("STARTLEARNING")) {
         output_string_ = "Fail to request data. | " + udp_client_->getOutputMSG();
+        std::cout << "xxx: " << output_string_ << std::endl;
         status_ = FEEDBACK::ERROR;
         return false;
     }
@@ -162,10 +161,11 @@ bool SixDMimicLocalization::requestData(Pose &_result) {
     for (;;) {
         udp_server_->spinPoll();
         if (!(udp_server_->getLastReceivedDataTimestamp() == prev_timestamp)) {
-            /*std::cout << "Received from " << udp_server_->getLastClientAddress() << " at ["
+
+            std::cout << "Received from " << udp_server_->getLastClientAddress() << " at ["
             << udp_server_->getLastReceivedDataTimestamp() << "] " << "The following message: \n"
             << udp_server_->getLastReceivedData() << std::endl;
-            */
+
             data = udp_server_->getLastReceivedData();
             prev_timestamp = udp_server_->getLastReceivedDataTimestamp();
             break;
@@ -189,6 +189,7 @@ bool SixDMimicLocalization::requestData(Pose &_result) {
         }
 
         output_string_ = "Data protocol is not correct. Decoded message: \"" + ss.str() + "\"";
+        //std::cout << "xxx: " << output_string_ << std::endl;
         status_ = FEEDBACK::ERROR;
         return false;
     }
@@ -201,7 +202,7 @@ bool SixDMimicLocalization::requestData(Pose &_result) {
                       std::stod(data_arr.at(7)),
                       std::stod(data_arr.at(8)));
 
-    _result.setName("candidate_" + std::to_string(candidate_index_));
+    _result.setName(target_name_ + std::to_string(candidate_index_));
     _result.setParentName(data_arr.at(2));
     _result.setPosition(t);
     _result.setRPYOrientationZYXOrder(q);
