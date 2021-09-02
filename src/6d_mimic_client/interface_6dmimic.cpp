@@ -120,12 +120,12 @@ bool SixDMimicLocalization::runApp() {
 
 bool SixDMimicLocalization::stopApp() {
     if (!first_sixdmimic_localization_communication_) {
-        udp_client_->closeSocket();
-        udp_server_->closeSocket();
+        //udp_client_->closeSocket();
+        //udp_server_->closeSocket();
         sixdmimic_localization_thread_reader_->interrupt();
         sixdmimic_localization_thread_reader_->join();
         //pclose(pipe_to_obj_localization_.get());
-        std::cout << "Killing 6Dmimic server" << std::endl;
+        DEBUG_MSG("Killing 6Dmimic server");
         popen(plugin_terminator_path_.c_str(), "r");
         sleep(1);
         first_sixdmimic_localization_communication_ = true;
@@ -149,7 +149,6 @@ bool SixDMimicLocalization::requestData(Pose &_result) {
 
     if (!udp_client_->send("STARTLEARNING")) {
         output_string_ = "Fail to request data. | " + udp_client_->getOutputMSG();
-        std::cout << "xxx: " << output_string_ << std::endl;
         status_ = FEEDBACK::ERROR;
         return false;
     }
@@ -162,9 +161,9 @@ bool SixDMimicLocalization::requestData(Pose &_result) {
         udp_server_->spinPoll();
         if (!(udp_server_->getLastReceivedDataTimestamp() == prev_timestamp)) {
 
-            std::cout << "Received from " << udp_server_->getLastClientAddress() << " at ["
+            DEBUG_MSG("Received from " << udp_server_->getLastClientAddress() << " at ["
             << udp_server_->getLastReceivedDataTimestamp() << "] " << "The following message: \n"
-            << udp_server_->getLastReceivedData() << std::endl;
+            << udp_server_->getLastReceivedData());
 
             data = udp_server_->getLastReceivedData();
             prev_timestamp = udp_server_->getLastReceivedDataTimestamp();
@@ -235,7 +234,7 @@ int SixDMimicLocalization::getStatus() {
 }
 
 std::string SixDMimicLocalization::getOutputString() {
-    return output_string_;
+    return (MSG_PREFIX + output_string_);
 }
 
 void SixDMimicLocalization::execCallback(int _file_descriptor) {
@@ -246,7 +245,7 @@ void SixDMimicLocalization::execCallback(int _file_descriptor) {
             //boost::this_thread::sleep(boost::posix_time::milliseconds(500)); //interruption with sleep
         }
         catch (boost::thread_interrupted &) {
-            std::cout << plugin_name + " pipe thread is stopped." << std::endl;
+            DEBUG_MSG( plugin_name + " pipe thread is stopped." );
             return;
         }
     }

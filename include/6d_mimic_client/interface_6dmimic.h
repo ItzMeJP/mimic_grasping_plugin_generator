@@ -1,6 +1,13 @@
 //
 // Created by joaopedro on 11/08/21.
 //
+#define MSG_PREFIX "<Interface6DMimicPlugin> "
+
+#ifndef NDEBUG
+#define DEBUG_MSG(str) do { std::cout << "\033[;33m" <<"[WARN] "<< MSG_PREFIX << str << "\033[0m"<< std::endl; } while( false )
+#else
+#define DEBUG_MSG(str) do { } while ( false )
+#endif
 
 #ifndef MIMIC_GRASPING_PLUGIN_GENERATOR_INTERFACE_6DMIMIC_NODE_H
 #define MIMIC_GRASPING_PLUGIN_GENERATOR_INTERFACE_6DMIMIC_NODE_H
@@ -13,7 +20,6 @@
 #include <jsoncpp/json/json.h>
 
 #include <simple_network/udp_interface.h>
-
 
 #include <mimic_grasping_api/localization_base.h>
 
@@ -75,6 +81,8 @@ private:
 
     std::shared_ptr<simple_network::udp_interface::UDPClient> udp_client_;
     std::shared_ptr<simple_network::udp_interface::UDPServer> udp_server_;
+
+    //std::string msg_prefix_ = "<Interface6DMimicPlugin> ";
 
     bool convertDataStrToPose(std::string _in, std::vector<std::string> &_data_arr);
 };

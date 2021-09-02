@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
     instance->setAppConfigPath(root_folder_path_ + "/configs/plugin_tool_localization_6dmimic.json");
 
     if (!instance->loadAppConfiguration() || !instance->runApp()) {
-        std::cout << instance->getOutputString() << std::endl;
+        std::cerr << instance->getOutputString() << std::endl;
         return 1;
     }
 
