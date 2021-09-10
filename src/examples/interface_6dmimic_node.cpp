@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
 
     instance->setAppExec(root_folder_path_ + "/scripts/tool_localization_6dmimic_init.sh");
     instance->setAppTermination( root_folder_path_ + "/scripts/tool_localization_6dmimic_close.sh");
-    instance->setAppConfigPath(root_folder_path_ + "/configs/plugin_tool_localization_6dmimic.json");
+    instance->setAppConfigPath(root_folder_path_ + "/configs/default/plugin_tool_localization_6dmimic.json");
 
     if (!instance->loadAppConfiguration() || !instance->runApp()) {
         std::cerr << instance->getOutputString() << std::endl;
