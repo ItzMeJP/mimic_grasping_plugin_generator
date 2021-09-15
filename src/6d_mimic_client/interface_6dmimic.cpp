@@ -121,7 +121,7 @@ bool SixDMimicLocalization::runApp() {
 bool SixDMimicLocalization::stopApp() {
     if (!first_sixdmimic_localization_communication_) {
         //udp_client_->closeSocket();
-        //udp_server_->closeSocket();
+        udp_server_->closeSocket();
         sixdmimic_localization_thread_reader_->interrupt();
         sixdmimic_localization_thread_reader_->join();
         //pclose(pipe_to_obj_localization_.get());
