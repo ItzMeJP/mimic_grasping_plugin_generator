@@ -85,6 +85,8 @@ private:
     //std::string msg_prefix_ = "<Interface6DMimicPlugin> ";
 
     bool convertDataStrToPose(std::string _in, std::vector<std::string> &_data_arr);
+
+    void freeMem();
 };
 
 /** ################## Factory Function - Plugin EntryPoint  ##################  **/

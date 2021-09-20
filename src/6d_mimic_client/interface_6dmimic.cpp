@@ -7,7 +7,9 @@
 
 SixDMimicLocalization::SixDMimicLocalization() {};
 
-SixDMimicLocalization::~SixDMimicLocalization() {};
+SixDMimicLocalization::~SixDMimicLocalization() {
+    //freeMem();
+};
 
 bool SixDMimicLocalization::setAppConfigPath(std::string _file_with_path) {
     plugin_config_path_ = _file_with_path;
@@ -117,6 +119,13 @@ bool SixDMimicLocalization::runApp() {
     return true;
 }
 
+void SixDMimicLocalization::freeMem(){
+    //udp_client_.reset();
+    //udp_server_.reset();
+    sixdmimic_localization_thread_reader_.reset();
+    pipe_to_sixdmimic_localization_.reset();
+
+}
 
 bool SixDMimicLocalization::stopApp() {
     if (!first_sixdmimic_localization_communication_) {
@@ -127,8 +136,8 @@ bool SixDMimicLocalization::stopApp() {
         //pclose(pipe_to_obj_localization_.get());
         DEBUG_MSG("Killing 6Dmimic server");
         popen(plugin_terminator_path_.c_str(), "r");
-        sleep(1);
         first_sixdmimic_localization_communication_ = true;
+        //freeMem();
         return true;
     } else {
         output_string_ = "Cannot kill since the 6DMimic recognition process is not running.";
