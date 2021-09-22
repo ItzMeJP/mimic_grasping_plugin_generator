@@ -190,10 +190,11 @@ bool SixDMimicLocalization::requestData(Pose &_result) {
     }
 
     std::vector<std::string> data_arr;
+    std::stringstream ss;
+
     if (!convertDataStrToPose(data, data_arr)) {
-        std::stringstream ss;
         for (size_t i = 0; i < data_arr.size(); ++i) {
-            ss << data_arr.at(i) << " ";
+            ss << data_arr.at(i) << " ; ";
         }
 
         output_string_ = "Data protocol is not correct. Decoded message: \"" + ss.str() + "\"";
@@ -202,18 +203,28 @@ bool SixDMimicLocalization::requestData(Pose &_result) {
         return false;
     }
 
-    Eigen::Translation3d t(std::stod(data_arr.at(3)),
-                           std::stod(data_arr.at(4)),
-                           std::stod(data_arr.at(5)));
+    for (size_t i = 0; i < data_arr.size(); ++i) {
+        ss << data_arr.at(i) << " ; ";
+    }
+    DEBUG_MSG("Decoded msg: " + ss.str());
 
-    Eigen::Vector3d q(std::stod(data_arr.at(6)),
-                      std::stod(data_arr.at(7)),
-                      std::stod(data_arr.at(8)));
+    Eigen::Translation3d t(std::atof(data_arr.at(3).c_str()),
+                           std::atof(data_arr.at(4).c_str()),
+                           std::atof(data_arr.at(5).c_str()));
+
+    Eigen::Vector3d q(std::atof(data_arr.at(6).c_str()),
+                      std::atof(data_arr.at(7).c_str()),
+                      std::atof(data_arr.at(8).c_str()));
 
     _result.setName(target_name_ + std::to_string(candidate_index_));
     _result.setParentName(data_arr.at(2));
     _result.setPosition(t);
     _result.setRPYOrientationZYXOrder(q);
+
+    DEBUG_MSG("\nConverted Message\nName: "<<_result.getName() << "\nParent: " << _result.getParentName()
+    << "\n Pos [x,y,z][meters]: " << _result.getPosition().x()  << " | " << _result.getPosition().y()  << " | " << _result.getPosition().z()
+    << "\n RPY [x,y,z][radians]: " << _result.getRPYOrientationZYXOrder().x() << " | " << _result.getRPYOrientationZYXOrder().y() << " | " << _result.getRPYOrientationZYXOrder().z()
+    << "\n Quaternion [x,y,z,w]: " << _result.getQuaternionOrientation().x() << " | " << _result.getQuaternionOrientation().y() << " | " << _result.getQuaternionOrientation().z() << " | " << _result.getQuaternionOrientation().w() );
 
     candidate_index_++;
     return true;
