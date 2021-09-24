@@ -77,6 +77,14 @@ bool SixDMimicLocalization::runApp() {
     pipe_to_sixdmimic_localization_.reset(
             popen(plugin_exec_path_.c_str(), "r")); // TODO: find a solution to treat this error!
 
+    if(pipe_to_sixdmimic_localization_.get() == NULL){
+        output_string_ = "Error in open the executor file for 6DMimic plugin. ";
+        output_string_ += strerror(errno);
+        DEBUG_MSG(output_string_);
+        //strerror(errno); //printing errno value
+        return false;
+    }
+
     int descriptor = fileno(pipe_to_sixdmimic_localization_.get());
     fcntl(descriptor, F_SETFL, O_NONBLOCK);
 
@@ -120,10 +128,12 @@ bool SixDMimicLocalization::runApp() {
 }
 
 void SixDMimicLocalization::freeMem(){
-    //udp_client_.reset();
-    //udp_server_.reset();
-    sixdmimic_localization_thread_reader_.reset();
-    pipe_to_sixdmimic_localization_.reset();
+    udp_client_.reset();
+    udp_server_.reset();
+    if(sixdmimic_localization_thread_reader_.use_count()>=1)
+        sixdmimic_localization_thread_reader_.reset();
+    if(pipe_to_sixdmimic_localization_.use_count()>=1)
+        pipe_to_sixdmimic_localization_.reset();
 
 }
 
@@ -135,9 +145,14 @@ bool SixDMimicLocalization::stopApp() {
         sixdmimic_localization_thread_reader_->join();
         //pclose(pipe_to_obj_localization_.get());
         DEBUG_MSG("Killing 6Dmimic server");
-        popen(plugin_terminator_path_.c_str(), "r");
+        //popen(plugin_terminator_path_.c_str(), "r");
         first_sixdmimic_localization_communication_ = true;
-        //freeMem();
+        freeMem();
+
+        if(system(plugin_terminator_path_.c_str())==-1){
+            output_string_ = "Error in open 6DMimic terminator. ";
+        }
+
         return true;
     } else {
         output_string_ = "Cannot kill since the 6DMimic recognition process is not running.";
@@ -208,13 +223,23 @@ bool SixDMimicLocalization::requestData(Pose &_result) {
     }
     DEBUG_MSG("Decoded msg: " + ss.str());
 
-    Eigen::Translation3d t(std::atof(data_arr.at(3).c_str()),
-                           std::atof(data_arr.at(4).c_str()),
-                           std::atof(data_arr.at(5).c_str()));
+    Eigen::Translation3d t(std::stod(data_arr.at(3)),
+                           std::stod(data_arr.at(4)),
+                           std::stod(data_arr.at(5)));
 
-    Eigen::Vector3d q(std::atof(data_arr.at(6).c_str()),
-                      std::atof(data_arr.at(7).c_str()),
-                      std::atof(data_arr.at(8).c_str()));
+    /*
+    std::cout << "atof t [x,y,z] = "<< std::atof(data_arr.at(3).c_str()) << " | " << std::atof(data_arr.at(4).c_str()) << " | " << std::atof(data_arr.at(5).c_str()) << std::endl;
+    std::cout << "t [x,y,z] = "<< t.x() << " | " << t.y() << " | " << t.z() << std::endl;
+    */
+
+    Eigen::Vector3d q(std::stod(data_arr.at(6)),
+                      std::stod(data_arr.at(7)),
+                      std::stod(data_arr.at(8)));
+
+    /*
+    std::cout << "atof q[x,y,z] = "<< std::atof(data_arr.at(6).c_str() )<< " | " << std::atof(data_arr.at(7).c_str()) << " | " << std::atof(data_arr.at(8).c_str()) << std::endl;
+    std::cout << "q [x,y,z] = "<< q.x() << " | " << q.y() << " | " << q.z() << std::endl;
+    */
 
     _result.setName(target_name_ + std::to_string(candidate_index_));
     _result.setParentName(data_arr.at(2));

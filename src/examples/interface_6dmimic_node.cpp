@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
 
     if(env_root_folder_path == NULL) {
         std::cerr<<"The environment variable $MIMIC_GRASPING_SERVER_ROOT is not defined."<<std::endl;
-        return 1;
+        return 0;
     }
 
     std::string root_folder_path_ = std::string(env_root_folder_path);
@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
 
     if (!instance->loadAppConfiguration() || !instance->runApp()) {
         std::cerr << instance->getOutputString() << std::endl;
-        return 1;
+        return 0;
     }
 
         Pose p;
@@ -63,5 +63,69 @@ int main(int argc, char **argv) {
 
     instance->spin(250);
     instance->stopApp();
+    ph_.ClearPluginList();
+
+
+
+
+
+
+    if(!ph_.loadDynamicPlugins(path,true)){
+        std::cout << ph_.getPluginManagementOutputMsg() << std::endl;
+        return false;
+    }
+
+    std::cout<< "Number of plugins loaded: " << ph_.GetNumberOfPluginsLoaded() << std::endl;
+
+    instance.reset();
+    instance = nullptr;
+    instance = ph_.CreateInstanceAs<LocalizationBase>(ph_.GetPluginFactoryInfo(0)->Name(),ph_.GetPluginFactoryInfo(0)->GetClassName(0));
+    assert(instance != nullptr);
+
+    instance->setAppExec(root_folder_path_ + "/scripts/tool_localization_6dmimic_init.sh");
+    instance->setAppTermination( root_folder_path_ + "/scripts/tool_localization_6dmimic_close.sh");
+    instance->setAppConfigPath(root_folder_path_ + "/configs/default/plugin_tool_localization_6dmimic.json");
+
+    if (!instance->loadAppConfiguration() || !instance->runApp()) {
+        std::cerr << instance->getOutputString() << std::endl;
+        return 0;
+    }
+
+    it = 1;
+    while (true) {
+        //std::cin.ignore();
+        std::cout<< "#" << it << " localization recognition iteration..." << std::endl;
+        instance->spin(250);
+        if(instance->requestData(p)){
+            std::cout<< "\n Child frame name: " << p.getName() << "\n Parent frame name: " << p.getParentName()
+                     << "\n Position [x,y,z]: [" <<
+                     p.getPosition().x() << ", " << p.getPosition().y() << ", "
+                     << p.getPosition().z() << "]\n Orientation [x,y,z,w]: [" <<
+                     p.getQuaternionOrientation().x() << ", "
+                     << p.getQuaternionOrientation().y() << ", "
+                     << p.getQuaternionOrientation().z() << ", "
+                     << p.getQuaternionOrientation().w() << "]\n" << std::endl;
+            break;
+        }
+        else{
+            std::cerr<<"ERROR in tool localization estimation: "<< instance->getOutputString() <<std::endl;
+        }
+        it++;
+        sleep(1);
+    }
+
+    instance->spin(250);
+    instance->stopApp();
+    ph_.ClearPluginList();
+
+
+
+
+
+
+
+
+
+
     return 0;
 }

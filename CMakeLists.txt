@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(mimic_grasping_plugin_generator
-        VERSION 16.09.2021
+        VERSION 24.09.2021
         DESCRIPTION
         "Package to build pure c++ plugins to mimic_grasping_api")
 
