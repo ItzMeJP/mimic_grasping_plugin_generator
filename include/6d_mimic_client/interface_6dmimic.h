@@ -58,7 +58,7 @@ protected:
     std::string current_pipe_output_str_;
 
     std::shared_ptr<boost::thread> sixdmimic_localization_thread_reader_;
-    std::shared_ptr<FILE> pipe_to_sixdmimic_localization_;
+    FILE *pipe_to_sixdmimic_localization_;
 
     Json::Value config_data_;
 

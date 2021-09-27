@@ -68,6 +68,9 @@ int main(int argc, char **argv) {
 
 
 
+    //sleep(10);
+
+
 
 
     if(!ph_.loadDynamicPlugins(path,true)){

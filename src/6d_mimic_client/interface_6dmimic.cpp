@@ -8,7 +8,7 @@
 SixDMimicLocalization::SixDMimicLocalization() {};
 
 SixDMimicLocalization::~SixDMimicLocalization() {
-    //freeMem();
+    freeMem();
 };
 
 bool SixDMimicLocalization::setAppConfigPath(std::string _file_with_path) {
@@ -74,18 +74,19 @@ bool SixDMimicLocalization::runApp() {
 
     candidate_index_ = 0;
 
-    pipe_to_sixdmimic_localization_.reset(
-            popen(plugin_exec_path_.c_str(), "r")); // TODO: find a solution to treat this error!
+    pipe_to_sixdmimic_localization_ = popen(plugin_exec_path_.c_str(), "r");
 
-    if(pipe_to_sixdmimic_localization_.get() == NULL){
+    std::string aux = strerror(errno);
+
+    if(pipe_to_sixdmimic_localization_ == NULL){
         output_string_ = "Error in open the executor file for 6DMimic plugin. ";
-        output_string_ += strerror(errno);
+        output_string_ += aux;
         DEBUG_MSG(output_string_);
         //strerror(errno); //printing errno value
         return false;
     }
 
-    int descriptor = fileno(pipe_to_sixdmimic_localization_.get());
+    int descriptor = fileno(pipe_to_sixdmimic_localization_);
     fcntl(descriptor, F_SETFL, O_NONBLOCK);
 
     sixdmimic_localization_thread_reader_.reset(
@@ -130,11 +131,9 @@ bool SixDMimicLocalization::runApp() {
 void SixDMimicLocalization::freeMem(){
     udp_client_.reset();
     udp_server_.reset();
+
     if(sixdmimic_localization_thread_reader_.use_count()>=1)
         sixdmimic_localization_thread_reader_.reset();
-    if(pipe_to_sixdmimic_localization_.use_count()>=1)
-        pipe_to_sixdmimic_localization_.reset();
-
 }
 
 bool SixDMimicLocalization::stopApp() {
@@ -143,7 +142,13 @@ bool SixDMimicLocalization::stopApp() {
         udp_server_->closeSocket();
         sixdmimic_localization_thread_reader_->interrupt();
         sixdmimic_localization_thread_reader_->join();
-        //pclose(pipe_to_obj_localization_.get());
+
+        if(pclose(pipe_to_sixdmimic_localization_) == -1){
+            std::string s = strerror(errno);
+            output_string_ = "Failed to call 6DMimic terminator " + s;
+            DEBUG_MSG(output_string_);
+        }
+
         DEBUG_MSG("Killing 6Dmimic server");
         //popen(plugin_terminator_path_.c_str(), "r");
         first_sixdmimic_localization_communication_ = true;
