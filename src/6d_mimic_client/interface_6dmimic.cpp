@@ -31,6 +31,12 @@ bool SixDMimicLocalization::setTargetName(std::string _name_with_path) {
     return true;
 }
 
+
+std::string SixDMimicLocalization::getTargetName()
+{
+    return target_name_;
+}
+
 bool SixDMimicLocalization::loadAppConfiguration() {
 
     std::ifstream config_file(plugin_config_path_, std::ifstream::binary);
@@ -46,6 +52,7 @@ bool SixDMimicLocalization::loadAppConfiguration() {
         return false;
     }
 
+    target_name_ = config_data_["prefix_name"].asString();
     wait_for_sixdmimic_result_timeout_in_seconds_ = config_data_["wait_for_result_timeout_in_seconds"].asInt();
     listen_udp_.ip_addr = config_data_["listen_ip_address"].asString();
     listen_udp_.ip_port = config_data_["listen_ip_port"].asInt();
