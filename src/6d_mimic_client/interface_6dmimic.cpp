@@ -211,7 +211,7 @@ bool SixDMimicLocalization::requestData(Pose &_result) {
 
         if (current_time > wait_for_sixdmimic_result_timeout_in_seconds_) {
             output_string_ = "Fail to request data. | Request timeout. ";
-            status_ = FEEDBACK::ERROR;
+            status_ = FEEDBACK::ABORTED;
             return false;
         }
     }
