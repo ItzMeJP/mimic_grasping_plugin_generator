@@ -154,6 +154,7 @@ bool SixDMimicLocalization::stopApp() {
             std::string s = strerror(errno);
             output_string_ = "Failed to call 6DMimic terminator " + s;
             DEBUG_MSG(output_string_);
+            exit(1);
         }
 
         DEBUG_MSG("Killing 6Dmimic server");
@@ -185,17 +186,19 @@ bool SixDMimicLocalization::requestData(Pose &_result) {
 
     if (!udp_client_->send("STARTLEARNING")) {
         output_string_ = "Fail to request data. | " + udp_client_->getOutputMSG();
+        DEBUG_MSG(output_string_);
         status_ = FEEDBACK::ERROR;
         return false;
     }
 
-    std::string prev_timestamp, data;
+    std::string data;
     const clock_t begin_time = clock();
     float current_time = 0;
 
     for (;;) {
         udp_server_->spinPoll();
-        if (!(udp_server_->getLastReceivedDataTimestamp() == prev_timestamp)) {
+
+        if (udp_server_->getLastReceivedDataTimestamp() != "" && (udp_server_->getLastReceivedDataTimestamp().compare(prev_timestamp) != 0 )) { //is different?
 
             DEBUG_MSG("Received from " << udp_server_->getLastClientAddress() << " at ["
             << udp_server_->getLastReceivedDataTimestamp() << "] " << "The following message: \n"
@@ -203,6 +206,7 @@ bool SixDMimicLocalization::requestData(Pose &_result) {
 
             data = udp_server_->getLastReceivedData();
             prev_timestamp = udp_server_->getLastReceivedDataTimestamp();
+            DEBUG_MSG("Previous Timestamp Updated to : " << prev_timestamp);
             break;
         }
 
@@ -211,6 +215,7 @@ bool SixDMimicLocalization::requestData(Pose &_result) {
 
         if (current_time > wait_for_sixdmimic_result_timeout_in_seconds_) {
             output_string_ = "Fail to request data. | Request timeout. ";
+            DEBUG_MSG(output_string_);
             status_ = FEEDBACK::ABORTED;
             return false;
         }
@@ -299,10 +304,12 @@ void SixDMimicLocalization::execCallback(int _file_descriptor) {
         try {
             this->exec(_file_descriptor);
             boost::this_thread::interruption_point();
+            //DEBUG_MSG("dentro do try");
             //boost::this_thread::sleep(boost::posix_time::milliseconds(500)); //interruption with sleep
         }
         catch (boost::thread_interrupted &) {
             DEBUG_MSG( plugin_name + " pipe thread is stopped." );
+
             return;
         }
     }
@@ -313,12 +320,15 @@ void SixDMimicLocalization::exec(int _file_descriptor) {
     char buffer[128];
 
     ssize_t r = read(_file_descriptor, buffer, 128);
+    //DEBUG_MSG( "Aqui dentro" );
 
-    if (r == -1 && errno == EAGAIN) {}
+    if (r == -1 && errno == EAGAIN) { }
     else if (r > 0) {
         current_pipe_output_str_ = buffer;
+        //DEBUG_MSG( "Aqui dentro do ELSE IF" );
     } else {
         err_flag_pipe_corrupted_ = true;
+        //DEBUG_MSG( "Aqui dentro do ELSE" );
         return;
     }
 

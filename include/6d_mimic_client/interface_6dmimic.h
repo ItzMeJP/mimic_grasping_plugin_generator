@@ -57,7 +57,7 @@ protected:
     bool first_sixdmimic_localization_communication_ = true,
     err_flag_pipe_corrupted_ = false;
 
-    std::string current_pipe_output_str_;
+    std::string current_pipe_output_str_, prev_timestamp;
 
     std::shared_ptr<boost::thread> sixdmimic_localization_thread_reader_;
     FILE *pipe_to_sixdmimic_localization_;
@@ -102,7 +102,7 @@ auto GetPluginFactory() -> IPluginFactory * {
 
     static PluginFactory pinfo = [] {
         /** Properly set the plugin name and version **/
-        auto p = PluginFactory(plugin_name.c_str(), "30_09_2021");
+        auto p = PluginFactory(plugin_name.c_str(), "25_01_2022");
         /** Register all classes defined inside the plugin **/
         p.registerClass<SixDMimicLocalization>("SixDMimicLocalization");
         return p;
